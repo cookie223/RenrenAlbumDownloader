@@ -6,7 +6,7 @@
 #
 from imp import reload
 import sys
-from setuptools.compat import execfile
+# from setuptools.compat import execfile
 
 from Renren import SuperRenren
 import time, os

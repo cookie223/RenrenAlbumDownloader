@@ -82,6 +82,7 @@ class RenrenRequester:
         self.opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.4 (KHTML, like Gecko) Chrome/22.0.1229.92 Safari/537.4')]
         req = urllib2.Request(self.LoginUrl, postData)
         result = self.opener.open(req)
+        # print result.geturl()
 
         if not self.__FindInfoWhenLogin(result):
             return False
@@ -94,28 +95,34 @@ class RenrenRequester:
         
         rawHtml = result.read()
         # print(rawHtml)
-
+        code_pattern = re.compile(r'<dl id="code" class="code clearfix">')
+        #if code_pattern.search(rawHtml) is not None:
+            #logger.info("test code, cannot deal with it yet")
+        # f = open('rawhtml.txt', "w")
+        # f.write(rawHtml)
         # 获取用户id
-        useridPattern = re.compile(r'\'id\':\'(\d+?)\'')
+        useridPattern = re.compile(r'ruid\s*:\s*"(\d+)",')
         try:
             self.userid = useridPattern.search(rawHtml).group(1)
         except:
             print('Failed...')
             return False
         # 查找requestToken
-        pos = rawHtml.find("get_check:'")
-        if pos == -1: return False        
-        rawHtml = rawHtml[pos + 11:]
-        token = match('-\d+', rawHtml)
-        if token is None:
-            token = match('\d+', rawHtml)
-            if token is None: return False
-        self.requestToken = token.group()  
+        token_pattern = re.compile(r"requestToken\s*:\s*'(\d+)',")
+        token = token_pattern.search(rawHtml).group(1)
+        #if pos == -1: return False
+        #rawHtml = rawHtml[pos + 11:]
+        #token = match('-\d+', rawHtml)
+        #if token is None:
+        #    token = match('\d+', rawHtml)
+        #    if token is None: return False
+        self.requestToken = token
 
         # 查找_rtk
-        pos = rawHtml.find("get_check_x:'")
-        if pos == -1: return False        
-        self._rtk = rawHtml[pos + 13:pos + 13 +8]
+        _rtk_pattern = re.compile(r"_rtk\s+:\s'(\w+)'")
+        _rtk = _rtk_pattern.search(rawHtml).group(1)
+        #if pos == -1: return False
+        self._rtk = _rtk
 
         logger.info('Login renren.com successfully.')
         logger.info("userid: %s, token: %s, rtk: %s" % (self.userid, self.requestToken, self._rtk))
@@ -211,7 +218,7 @@ class RenrenFriendList:
             friendIdList.append((id, Str2Uni('')))
             # print(id)
         
-        return friendIdList        
+        return friendIdList[:2]
     
 def DownloadImage(img_url, filename):
     count = 0
@@ -232,7 +239,7 @@ def DownloadImage(img_url, filename):
             logger.error("Downloading %s is failed." % filename, exc_info=True)
 
 
-class RenrenAlbumDownloader2012:
+class RenrenAlbumDownloader2015:
     '''单个相册的下载器
     '''
 
@@ -330,8 +337,8 @@ class RenrenAlbumDownloader2012:
         path = path.decode('utf-8')
         self.__EnsureFolder(path)
         
-        albumsUrl = "http://photo.renren.com/photo/%s/album/relatives" % userid
-        # print(albumsUrl)
+        albumsUrl = "http://photo.renren.com/photo/%s/album/v7#" % userid
+        print(albumsUrl)
 
         # 打开相册首页，以获取每个相册的地址以及名字
         rawHtml, url = self.requester.Request(albumsUrl)            
@@ -461,7 +468,7 @@ class AllFriendAlbumsDownloader:
             logger.info("Start creating the task list.")
             totalTaskList = []
             for userid, name in friendsList:
-                downloader = RenrenAlbumDownloader2012(self.requester, userid, path, threadnum)
+                downloader = RenrenAlbumDownloader2015(self.requester, userid, path, threadnum)
                 taskList = downloader.CreateTaskList()
                 totalTaskList.extend(taskList)
                 
@@ -524,7 +531,7 @@ class SuperRenren:
 
     # 下载相册
     def DownloadAlbum(self, userId, path = 'albums', threadnum=20):       
-        downloader = RenrenAlbumDownloader2012(self.requester, userId, path, threadnum)
+        downloader = RenrenAlbumDownloader2015(self.requester, userId, path, threadnum)
         downloader.Handler()
 
     # 自动下载所有好友相册
