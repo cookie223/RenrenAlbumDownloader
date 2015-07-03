@@ -298,26 +298,37 @@ class RenrenAlbumDownloader2015:
             #elif album_name == '<span class="password">': # 有密码，跳过
             #    continue
             logger.info("album_url: [%s]  album_name: [%s]" % (album_id, album_name))
-            album_url = 'http://photo.renren.com/photo/'+ owner_id +'/album-'+ album_id +'/v7'
+            album_url = 'http://photo.renren.com/photo/'+ owner_id +'/album-'+ album_id
             albums.append((album_name, album_url))
 
         return albums
 
     def __GetImgUrlsInAlbum(self, album_url):
+        '''@param album_url http://photo.renren.com/photo/owner_id/album-album_id
+           @return a list of (photo_id, url) tuple
+        '''
         # album_url += "/bypage/ajax?curPage=0&pagenum=100" # pick 100 pages which has 20 per page
-        rawHtml, url = self.requester.Request(album_url)            
-        rawHtml = unicode(rawHtml, "utf-8")
-
         img_urls = []
-        try:
-            data = json.loads(rawHtml)
-            photoList = data['photoList'] 
-            for item in photoList:
-                img_urls.append((item['photoid'], item['url']))
-        except ValueError:
-            logger.error("Json Error", exc_info=True)
-        finally:
-            return img_urls
+        curpage = 1
+        while True:
+            album_url_curpage = album_url + '/bypage/ajax/v7?page=' + str(curpage) + '&pageSize=100'
+            rawHtml, url = self.requester.Request(album_url_curpage)
+            rawHtml = unicode(rawHtml, "utf-8")
+            # print album_url_curpage
+            # print rawHtml
+            empty_pattern = re.compile(r'{"code":0,"photoList":\[\]}')
+            if empty_pattern.search(rawHtml) is not None:
+                break
+            try:
+                data = json.loads(rawHtml)
+                photoList = data['photoList']
+                for item in photoList:
+                    img_urls.append((item['photoId'], item['url']))
+            except ValueError:
+                logger.error("Json Error", exc_info=True)
+
+            curpage += 1
+        return img_urls
 
     def __EnsureFolder(self, path):
         if os.path.exists(path) == False:
@@ -339,7 +350,7 @@ class RenrenAlbumDownloader2015:
         self.__EnsureFolder(path)
         
         albumsUrl = "http://photo.renren.com/photo/%s/albumlist/v7#" % userid
-        print(albumsUrl)
+        # print(albumsUrl)
 
         # 打开相册首页
         rawHtml, url = self.requester.Request(albumsUrl)            
