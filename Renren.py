@@ -300,7 +300,7 @@ class RenrenAlbumDownloader2015:
             logger.info("album_url: [%s]  album_name: [%s]" % (album_id, album_name))
             album_url = 'http://photo.renren.com/photo/'+ owner_id +'/album-'+ album_id
             albums.append((album_name, album_url))
-
+        albums.append(('tag', 'http://photo.renren.com/photo/' + owner_id + '/tag/v7'))
         return albums
 
     def __GetImgUrlsInAlbum(self, album_url):
@@ -328,6 +328,15 @@ class RenrenAlbumDownloader2015:
                 logger.error("Json Error", exc_info=True)
 
             curpage += 1
+        return img_urls
+
+    def GetImgUrlsInTagAlbum(self, album_url):
+        img_urls = []
+        rawHtml, url = self.requester.Request(album_url)
+        rawHtml = unicode(rawHtml, "utf-8")
+        url_pattern = re.compile(r'{"height":\d+,"albumId":"\d+","photoId":"(\d+)","ownerId":"\d+","width":\d+,"url":"(\S+?)"')
+        for photo_id, url in url_pattern.findall(rawHtml):
+            img_urls.append((photo_id,url))
         return img_urls
 
     def __EnsureFolder(self, path):
@@ -376,9 +385,11 @@ class RenrenAlbumDownloader2015:
         for album_name, album_url in albums:
             logger.info("album_name: %s  album_url: %s" % (album_name, album_url))
             # print("album_name: %s  album_url: %s" % (album_name, album_url))
-
-            album_name = self.__NormFilename(album_name)
-            album_img_dict[album_name] = self.__GetImgUrlsInAlbum(album_url)
+            if album_name != 'tag':
+                album_name = self.__NormFilename(album_name)
+                album_img_dict[album_name] = self.__GetImgUrlsInAlbum(album_url)
+            else:
+                album_img_dict[album_name] = self.GetImgUrlsInTagAlbum(album_url)
 
         # 创建文件夹，以及下载任务 
         download_tasks = []
