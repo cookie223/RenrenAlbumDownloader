@@ -282,28 +282,29 @@ class RenrenAlbumDownloader2015:
         返回元组列表（相册名，地址）
         '''
         # print(rawHtml)
-        albumUrlPattern = re.compile(r'''</div></a>.*?<a href="(.*?)\?frommyphoto" class="album-title">.*?<span class="album-name">(.*?)</span>''', re.S)
-
+        # albumUrlPattern = re.compile(r'''</div></a>.*?<a href="(.*?)\?frommyphoto" class="album-title">.*?<span class="album-name">(.*?)</span>''', re.S)
+        albumUrlPattern = re.compile(r'{"cover":"\S+","albumName":"(.+?)","albumId":"(\d+)","ownerId":(\d+),"sourceControl":\d*,"photoCount":\d+,"type":\d*}')
         albums = []
-        for album_url, album_name in albumUrlPattern.findall(rawHtml):
+        for album_name, album_id, owner_id in albumUrlPattern.findall(rawHtml):
             album_name = album_name.strip()
-            album_name = album_name.replace('<i class="privacy-icon picon-friend"></i>', '')
-            album_name = album_name.replace('<i class="privacy-icon picon-custom"></i>', '')
-            if album_name == '<span class="userhead">':
-                album_name = u"头像相册"
-            elif album_name == '<span class="phone">':
-                album_name = u"手机相册"
-            elif album_name.startswith('<i class="privacy-icon picon-password"></i>'):
-                continue
-            elif album_name == '<span class="password">': # 有密码，跳过
-                continue
-            logger.info("album_url: [%s]  album_name: [%s]" % (album_url, album_name))
+            #album_name = album_name.replace('<i class="privacy-icon picon-friend"></i>', '')
+            #album_name = album_name.replace('<i class="privacy-icon picon-custom"></i>', '')
+            #if album_name == '<span class="userhead">':
+            #    album_name = u"头像相册"
+            #elif album_name == '<span class="phone">':
+            #    album_name = u"手机相册"
+            #elif album_name.startswith('<i class="privacy-icon picon-password"></i>'):
+            #    continue
+            #elif album_name == '<span class="password">': # 有密码，跳过
+            #    continue
+            logger.info("album_url: [%s]  album_name: [%s]" % (album_id, album_name))
+            album_url = 'http://photo.renren.com/photo/'+ owner_id +'/album-'+ album_id +'/v7'
             albums.append((album_name, album_url))
 
         return albums
 
     def __GetImgUrlsInAlbum(self, album_url):
-        album_url += "/bypage/ajax?curPage=0&pagenum=100" # pick 100 pages which has 20 per page
+        # album_url += "/bypage/ajax?curPage=0&pagenum=100" # pick 100 pages which has 20 per page
         rawHtml, url = self.requester.Request(album_url)            
         rawHtml = unicode(rawHtml, "utf-8")
 
@@ -312,7 +313,7 @@ class RenrenAlbumDownloader2015:
             data = json.loads(rawHtml)
             photoList = data['photoList'] 
             for item in photoList:
-                img_urls.append((item['title'], item['largeUrl'])) 
+                img_urls.append((item['photoid'], item['url']))
         except ValueError:
             logger.error("Json Error", exc_info=True)
         finally:
@@ -337,15 +338,16 @@ class RenrenAlbumDownloader2015:
         path = path.decode('utf-8')
         self.__EnsureFolder(path)
         
-        albumsUrl = "http://photo.renren.com/photo/%s/album/v7#" % userid
+        albumsUrl = "http://photo.renren.com/photo/%s/albumlist/v7#" % userid
         print(albumsUrl)
 
-        # 打开相册首页，以获取每个相册的地址以及名字
+        # 打开相册首页
         rawHtml, url = self.requester.Request(albumsUrl)            
         rawHtml = unicode(rawHtml, "utf-8")
         # print(rawHtml)
 
-        # 取得人名
+
+        # 取得人名以获取每个相册的地址以及名字
         peopleName = self.__GetPeopleNameFromHtml(rawHtml).strip()
         albums = self.__GetAlbumsNameFromHtml(rawHtml)
         # print(albums)
