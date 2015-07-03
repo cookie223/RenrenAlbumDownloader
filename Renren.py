@@ -218,7 +218,7 @@ class RenrenFriendList:
             friendIdList.append((id, Str2Uni('')))
             # print(id)
         
-        return friendIdList[:2]
+        return friendIdList
     
 def DownloadImage(img_url, filename):
     count = 0
@@ -499,8 +499,8 @@ class AllFriendAlbumsDownloader:
                 # print totalTaskList
                 
             doneSet = db["DoneTask"]
-            # db["TaskList"] = [item for item in totalTaskList if item[0] not in doneSet]
-            db["TaskList"] = totalTaskList
+            db["TaskList"] = [item for item in totalTaskList if item[0] not in doneSet]
+            # db["TaskList"] = totalTaskList
         else:
             logger.info("There is remain task, resume to download them.")
 
