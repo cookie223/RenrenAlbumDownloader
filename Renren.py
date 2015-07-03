@@ -398,6 +398,7 @@ class RenrenAlbumDownloader2015:
                     name += "I"
                 name_set.add(name)
                 filename = os.path.join(album_path, name + ".jpg")
+                # print img_url
                 download_tasks.append((img_url, filename))
 
         logger.info("Download Tasks size: %d." % len(download_tasks))
@@ -484,9 +485,11 @@ class AllFriendAlbumsDownloader:
                 downloader = RenrenAlbumDownloader2015(self.requester, userid, path, threadnum)
                 taskList = downloader.CreateTaskList()
                 totalTaskList.extend(taskList)
+                # print totalTaskList
                 
             doneSet = db["DoneTask"]
-            db["TaskList"] = [item for item in totalTaskList if item[0] not in doneSet]
+            # db["TaskList"] = [item for item in totalTaskList if item[0] not in doneSet]
+            db["TaskList"] = totalTaskList
         else:
             logger.info("There is remain task, resume to download them.")
 
