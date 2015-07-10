@@ -218,7 +218,7 @@ class RenrenFriendList:
             friendIdList.append((id, Str2Uni('')))
             # print(id)
         
-        return friendIdList
+        return friendIdList[30:]
     
 def DownloadImage(img_url, filename):
     count = 0
@@ -310,14 +310,20 @@ class RenrenAlbumDownloader2015:
         # album_url += "/bypage/ajax?curPage=0&pagenum=100" # pick 100 pages which has 20 per page
         img_urls = []
         curpage = 1
+        # print album_url
         while True:
             album_url_curpage = album_url + '/bypage/ajax/v7?page=' + str(curpage) + '&pageSize=100'
             rawHtml, url = self.requester.Request(album_url_curpage)
+            # print album_url_curpage, url
             rawHtml = unicode(rawHtml, "utf-8")
             # print album_url_curpage
             # print rawHtml
             empty_pattern = re.compile(r'{"code":0,"photoList":\[\]}')
             if empty_pattern.search(rawHtml) is not None:
+                break
+            # skip encrypted albums
+            encrypted_pattern = re.compile(r'\/album-\d+\/private')
+            if encrypted_pattern.search(url) is not None:
                 break
             try:
                 data = json.loads(rawHtml)
