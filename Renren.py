@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 # Filename:Renren.py
-# 作者：华亮
 #
 from HTMLParser import HTMLParser
 from Queue import Empty, Queue
@@ -30,7 +29,7 @@ socket.setdefaulttimeout(30)
 
     
 # 字符串形式的unicode转成真正的字符
-def Str2Uni(str):
+def Uni2Str(str):
     import re
     pat = re.compile(r'\\u(\w{4})')
     lst = pat.findall(str)        
@@ -215,7 +214,7 @@ class RenrenFriendList:
         friendIdPattern = re.compile(r'"fid":(\d+).*?,"fgroups"')
         friendIdList = []
         for id in friendIdPattern.findall(friendInfoPack):
-            friendIdList.append((id, Str2Uni('')))
+            friendIdList.append((id, Uni2Str('')))
             # print(id)
         
         return friendIdList

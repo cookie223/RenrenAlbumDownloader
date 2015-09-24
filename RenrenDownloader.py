@@ -1,15 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-  
-# author:  Hua Liang [ Stupid ET ]
-# email:   et@everet.org
-# website: http://EverET.org
+# -*- coding: utf-8 -*-
 #
-from imp import reload
-import sys
-# from setuptools.compat import execfile
+
 
 from Renren import SuperRenren
-import time, os
+# import time, os
 
 def main():
     dl, dg = {}, {}
